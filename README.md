@@ -87,3 +87,279 @@ From your terminal / command prompt (which you should still have open), type the
 npm start
 ```
 Now, go to http://localhost:3000 in your browser.
+
+Even if you have an idea of what your app is going to look like in the end, you start with single blocks. Each block on its own is functional and can help you do build something. You can even build bigger blocks out of smaller ones and join them together.
+
+That’s actually how Component-Based-Architecture works. So think about our todo app again. And think about it in terms of building blocks that you need to have all the functions of the app working. How would you split the app then?
+
+- App Component
+- Avatar Component
+- Date Component
+- Task List Component
+- Task Component
+- Add Button Component
+
+**src/App.css:** Delete Everything
+**src/App.js:** Edit it so it doesn’t import logo.svg and only returns Hello World. It should look like this:
+
+**src/index.css:** Delete everything
+
+**public/index.html:** Change title to TodoReact
+Now reloading our project in the browser should give us a simple “Hello World” message.
+
+## Creating The Task Component
+Lets add a new file called **Task.js** to our src folder. As a reminder, this is what the task component would look like:
+
+Looking at how this task component should look, it seems it could use a little help from a grid layout. Thankfully, Bootstrap can be easily integrated into our project. From the terminal / command prompt, run:
+`npm install react-bootstrap --save && npm install bootstrap@3 --save`
+We will also use font awesome for the check & remove icons so let’s install that too:
+`npm install react-fontawesome --save && npm install font-awesome --save`
+After installing these, we need to import our css files in our **index.js** file.
+
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import App from './App';
+import './index.css';
+
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/dist/css/bootstrap-theme.css';
+import 'font-awesome/css/font-awesome.css';
+
+ReactDOM.render(
+  <App />,
+  document.getElementById('root')
+);
+```
+
+Now let’s create the basic structure of our **Task** component
+
+```javascript
+import React, {Component} from 'react';
+import {Row, Col} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class Task extends Component {
+    render() {
+        return (
+            <div>
+                <Row>
+                    <Col xs={1}>
+                        <div>
+                            <p style={{textAlign: 'center', fontWeight: 'bold', paddingTop: '10px'}}>8
+                                <br/>
+                                <span>AM</span>
+                            </p>
+                        </div>
+                    </Col>
+                    <Col xs={10}>
+                        <h4 id="activity-title">Storefoundry Branding</h4>
+                        <p>Ideation/Sketch/Wireframing</p>
+                    </Col>
+                    <Col xs={1}>
+                        <Row style={{paddingTop: '10px'}}>
+                          <Col xs={6}>
+                            <FontAwesome name='times' />
+                          </Col>
+                          <Col xs={6}>
+                            <FontAwesome name='check' />
+                          </Col>
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
+        );
+    }
+}
+
+export default Task;
+```
+
+Now that we have created our task component, we can use it just like any other component.
+```javascript
+import React, { Component } from 'react';
+import Task from './Task.js';
+
+import './App.css';
+
+class App extends Component {
+  render() {
+    return (
+          <Task />
+    );
+  }
+}
+
+export default App;
+```
+
+No Styling yet … I know I know 😉. Let’s focus on building blocks before worrying about styling.
+So now that have built a task component and can render it, can we build a task list component that will render 5 task components? But of course!
+Let’s create a **TaskList** component by adding a file called **TaskList.js** to our src folder.
+```javascript
+
+import React, { Component } from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+  render() {
+    return (
+      <div>
+          <Task />
+          <Task />
+          <Task />
+          <Task />
+          <Task />
+      </div>
+    );
+  }
+}
+
+export default TaskList;
+```
+
+In this case, we simply imported our **Task** component and rendered 5 tasks to have our task list component.
+After this, let’s modify **App.js** to render our task list component.
+
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+
+import './App.css';
+
+class App extends Component {
+  render() {
+    return (
+      <div>
+          <TaskList />
+      </div>
+
+    );
+  }
+}
+
+export default App;
+```
+
+How about a **Date** Component that will sit on top of our **Task List** component? Let’s do it!
+Let’s create a **Date.js** file in our src folder.
+```javascript
+import React, {Component} from 'react';
+
+class Date extends Component {
+    render() {
+        return (
+            <div>
+                <h1>Thursday</h1>
+                <p>May 19, 2016</p>
+            </div>
+        );
+    }
+}
+
+export default Date;
+```
+
+Now let’s add our **Date** Component to our **App.js** file so it sits on top of the tasks list.
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+
+import './App.css';
+
+class App extends Component {
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+          <Date />
+          <br />
+          <TaskList />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+We will repeat the same process to add an avatar component and an add button component.
+### Avatar.js
+```
+
+import React, {Component} from 'react';
+import {Row, Col, Image} from 'react-bootstrap';
+
+class Avatar extends Component {
+    render() {
+        return (
+            <div>
+              <Row>
+                <Col xs={10}></Col>
+                <Col xs={2}>
+                  <Image src="https://cdn-images-1.medium.com/fit/c/200/200/1*qSozwB2ZQYFRd07N7rLzGw.jpeg" thumbnail circle />
+                </Col>
+              </Row>
+            </div>
+        );
+    }
+}
+
+export default Avatar;
+```
+
+I chose to use the Image component from React bootstrap here but using the default img works just fine.
+### AddButton.js
+```javascript
+import React, {Component} from 'react';
+import {Row, Col, Button} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class AddButton extends Component {
+    render() {
+        return (
+            <div>
+              <Row>
+                <Col xs={10}></Col>
+                <Col xs={2}>
+                  <Button bsStyle="danger" bsSize="large">
+                    <FontAwesome name='plus' />
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+        );
+    }
+}
+
+export default AddButton;
+```
+
+Final version of our **App.js** would then look like this:
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+          <Avatar />
+          <br />
+          <Date />
+          <br />
+          <TaskList />
+          <br />
+          <AddButton />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
