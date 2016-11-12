@@ -453,7 +453,9 @@ export default Task;
 ```
 
 The parts of the components I would like to make dynamic are the time section, the activity title and the activity description. But wait, if I’m making them dynamic, how am I going to pass data to it? Where is that data going to come from? 🤔
+
 Follow along, and say hello to **Props** #LetsDoThis 😄
+
 What are Props? Props are to react components what parameters are to functions. If you think about components like functions, then the way you define which parameters you pass to your functions is exactly how you would define your props as arbitrary inputs to be used in your react components. Applying that to our task component would give us something like this:
 ```javascript
 import React, {Component} from 'react';
@@ -499,6 +501,7 @@ export default Task;
 We didn’t change much, all we did was replace a bunch of static texts with this.props expressions. At this stage, if we take a look at our app, it’s going to look weird …
 
 Where did all the text go???? 😱😱😱
+
 Don’t panic just yet 😉 … Think about it. We now have a component with props defined. If the tasks are being displayed this way, it’s because the tasks components don’t know what the values of props.time, props.period, props.activity_title and props.activity_description are. So we need to edit our task list component to make sure that we are giving our tasks their props values for it to work as expected. Let’s do that real quick.
 ```javascript
 import React, { Component } from 'react';
@@ -578,8 +581,10 @@ export default TaskList;
 
 Our app still looks the same but under the hood, we have a more flexible way to manipulate our data. Try changing anything, adding a new task, editing existing tasks or removing a task and see what happens on the app. 😃
 That wasn’t too hard right? Let’s recap on what we did.
-We introduced a new 3rd party library called MomentJS to work with dates. Even though we didn’t do much with it in this chapter, we will work with it a little more in the upcoming chapter.
-We learned about props and applied them to make our task component dynamic.
-We tweaked our tasklist component so we can pass data to it directly from an array of tasks.
-We played around with our array of tasks to see our app automatically update itself with the state of our tasks array.
+
+- We introduced a new 3rd party library called MomentJS to work with dates. Even though we didn’t do much with it in this chapter, we will work with it a little more in the upcoming chapter.
+- We learned about props and applied them to make our task component dynamic.
+- We tweaked our tasklist component so we can pass data to it directly from an array of tasks.
+- We played around with our array of tasks to see our app automatically update itself with the state of our tasks array.
+
 Let’s pause for a second and think about this array of tasks again. Based on what we’ve seen, that means when adding a task, all we have to do is insert our task into the array of tasks and deleting a task just means removing that task from the array of tasks right? And we don’t have to worry about what happens on the UI side of things because it will automatically detect our changes and REACT to them … 😍😍😍
