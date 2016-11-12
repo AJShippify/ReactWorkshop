@@ -910,3 +910,221 @@ Let’s recap on what we did.
 - We extracted tasks into this.state
 - We created an addTask function that takes care of updating our state with a new task
 - We handled the click event within the AddButton component and made the changes propagate back to the main state of the application.
+
+Your task list must be behaving now according to the tasks you provide, but the task are still unresponsive so let's fix that in a jiffy. First we determine what actions an inidividual task can perform:
+
+- Remove a task
+- Mark itself as completed
+
+Let's go backwards for a moment and start editing out **Task.js** file adding a clickability to our font awesome icons and actions that they can perform if passed the correct props.
+```javascript
+import React, {Component} from 'react';
+import {Row, Col} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class Task extends Component {
+    render() {
+        return (
+            <div>
+              <Row>
+                <Col xs={1}>
+                  <div>
+                    <p style={{textAlign: 'center', fontWeight: 'bold', paddingTop: '10px'}}>{this.props.time}
+                      <br/>
+                      <span>{this.props.period}</span>
+                    </p>
+                  </div>
+                </Col>
+                <Col xs={10}>
+                  <h4>{this.props.activity_title}</h4>
+                  <p>{this.props.activity_description}</p>
+                </Col>
+                <Col xs={1}>
+                  <Row style={{paddingTop: '10px'}}>
+                    <Col xs={6}>
+                      <a href="#" onClick={this.props.removeTask}>
+                        <FontAwesome name='times' />
+                      </a>
+                    </Col>
+                    <Col xs={6}>
+                      <a href="#" onClick={this.props.toggleCompleteTask}>
+                        <FontAwesome name='check' />
+                      </a>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </div>
+        );
+    }
+}
+
+export default Task;
+```
+
+The question is, who provides these actions? Is it the **TaskList** or the **App** Component?
+
+To answer this question, we ask ourselves who is the source of truth, who does this data belongs to? Exactly, the App Component. Now that doesn't mean the TaskList does not know about what will happen since to be able to reach Task, App must pass down these state-changing functions throught the TaskList and it will pass it to the inidivual tasks.
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      tasks: [
+        {
+          'time': '12',
+          'period': 'AM',
+          'activity_title': 'Finish Tutorial Series',
+          'activity_description': '#ReactForNewbies',
+          'completed': false
+        }, {
+          'time': '9',
+          'period': 'AM',
+          'activity_title': 'Meeting with Team Leads',
+          'activity_description': 'New Project Kickoff',
+          'completed': true
+        }, {
+          'time': '11',
+          'period': 'AM',
+          'activity_title': 'Call Mom',
+          'activity_description': 'Return her call before she kills me',
+          'completed': false
+        }, {
+          'time': '3',
+          'period': 'PM',
+          'activity_title': 'Fix Wifey\'s website',
+          'activity_description': 'FB Ads Integration not working',
+          'completed': true
+        }, {
+          'time': '6',
+          'period': 'PM',
+          'activity_title': 'Do DB Backups',
+          'activity_description': 'Related to upcoming server migration',
+          'completed': false
+        }
+      ]
+    };
+  }
+  addTask(){
+    var task = {'time': '5', 'period': 'AM', 'activity_title': 'Jogging', 'activity_description': 'Go for a run!'};
+    var tasks = this.state.tasks.concat(task);
+    this.setState({tasks: tasks});
+  }
+  removeTask(index) {
+    var tasks = [
+      ...this.state.tasks.slice(0, index),
+      ...this.state.tasks.slice(index + 1),
+    ]
+    this.setState({tasks: tasks});
+  }
+  toggleCompleteTask(index) {
+    var tasks = this.state.tasks.map((task, idx) => {
+      if (idx === index) {
+        return { ...task, completed: !task.completed }
+      }
+      return task
+    })
+    this.setState({tasks: tasks});
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+        <Avatar />
+        <br />
+        <Date />
+        <br />
+        <TaskList tasks={this.state.tasks} removeTask={this.removeTask.bind(this)} toggleCompleteTask={this.toggleCompleteTask.bind(this)} />
+        <br />
+        <AddButton onClick={this.addTask.bind(this)} />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+As you can see, each task has now a completed property as part of its state, we will play with that part shortly.
+
+Another change are the **removeTask(index)** and **toggleCompleteTask(index)** methods in the App Component which are bound to modify its local state based on the changes we request. Now you might notice some weird syntax in **removeTask(index)**, that will be the ES7 spread operator, yeah, we are using that bleeding edge tech. It allows be to create mergeable subslices of collection objects to avoid modifying the aprent object.
+
+The methods are now being passed at **TaskList** which now owns the responsibility on providing these new props to the **Tasks Components**.
+
+Let's edit TaskList.js
+```javascript
+import React, {Component} from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+  render() {
+    return (
+      <div>
+        {this.props.tasks.map(function(task, index) {
+          return <Task
+            key={index}
+            time={task.time}
+            period={task.period}
+            activity_title={task.activity_title}
+            activity_description={task.activity_description}
+            completed={task.completed}
+            removeTask={() => this.props.removeTask(index)}
+            toggleCompleteTask={() => this.props.toggleCompleteTask(index)}
+          />
+        })}
+      </div>
+    );
+  }
+}
+
+export default TaskList;
+```
+
+Let's run our app and... Oh, oh?
+
+Apparently, **this** is undefined when adding the functions as props.
+
+This is due to a design implementation from Javascript's side for the handling of **this** references among objects and classes. Each time a function is called, the context of **this** can be changed depending on the functinality of the method called. Again ES6 rescues the day with arrow functions.
+
+They are just not for show, a fantastic part about them is that the context outside of the scope remains intact inside the scope of the function as well, remaining **this** intact.
+
+```javascript
+import React, {Component} from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+  render() {
+    return (
+      <div>
+        {this.props.tasks.map((task, index) => {
+          return <Task
+            key={index}
+            time={task.time}
+            period={task.period}
+            activity_title={task.activity_title}
+            activity_description={task.activity_description}
+            completed={task.completed}
+            removeTask={() => this.props.removeTask(index)}
+            toggleCompleteTask={() => this.props.toggleCompleteTask(index)}
+          />
+        })}
+      </div>
+    );
+  }
+}
+
+export default TaskList;
+```
+
+Let's take care rapidly of the complete button and change the style for the text elements with:
+```javascript
+<h4 style={{textDecoration: this.props.completed ? 'line-through' : 'none'}}>{this.props.activity_title}</h4>
+                  <p style={{textDecoration: this.props.completed ? 'line-through' : 'none'}}>{this.props.activity_description}</p>
+```
