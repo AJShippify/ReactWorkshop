@@ -588,3 +588,325 @@ That wasn’t too hard right? Let’s recap on what we did.
 - We played around with our array of tasks to see our app automatically update itself with the state of our tasks array.
 
 Let’s pause for a second and think about this array of tasks again. Based on what we’ve seen, that means when adding a task, all we have to do is insert our task into the array of tasks and deleting a task just means removing that task from the array of tasks right? And we don’t have to worry about what happens on the UI side of things because it will automatically detect our changes and REACT to them … 😍😍😍
+
+When running our app, changing any of the values in the tasks array cause our user interface to react instantly to the changes.
+
+That means, adding a task will be done by simply updating our array of tasks with whatever the user enters at the UI level right?
+
+But looking at where we defined our array of task, is that really where it should reside? Since tasks is defined in the **render** function of **TaskList**, it can’t be accessed from another component. So how do we solve this?
+
+An obvious answer will be that our tasks need to be stored as a global variable so we can access it from anywhere. So how do global variables work in React? 🤔
+
+Follow along, and say hello to **State**
+
+I’ve been trying to find a good definition of state, but I can’t really formulate one so let me explain with 2 examples.
+
+Imagine you had a car. When your car is parked, how do you know it’s actually parked safe for you to get down without hurting yourself?
+
+- Speed is at 0mph
+- Gear is in Parking mode
+- Handbrake is on
+- Engine is Off
+
+These 4 things guarantee that the car is parked right? And when you are about to start driving, these parameters will have to change for you to be able to move. So the state of your car when it’s parked is not the same as when it’s moving. And when your car gets into specific states, some actions are triggered. For example, pressing the accelarator changes the speed state and it increases. Pressing the brake pad also changes the speed state and it decreases. It’s interesting to note that even though the whole car has multiple properties that defines it’s state, the accelerator and brake pad only interact with one of them. The state of a car can be defined by a set of properties that all start with a default value (parked state) and change depending on some triggers.
+
+Let’s take another example. Imagine you had 3 bowls. one contains regular water, the second one ice and the third one boiling water.
+
+What do these 3 bowls have in common? It’s all water!
+
+But why are they different? Because they don’t have the same temperature!
+
+So if water is our component, the state being the temperature, which also starts with a default value changes the nature of our component when increased (into ice) or decreased (into boiling water).
+
+So thinking about our todo app now, what can we represent as it’s state?
+
+- Is it passed in from a parents via props? If so, it probably isn’t a state.
+- Does it remain unchanged over time? If so, it probably isn’t a state.
+- Can you compute it based on any other state or props in your component? If so, it isn’t a state
+
+By analysing all our components, we can conclude that indeed, our array of tasks is a good candidate to be a state. It’s not passed in from any parents, it doesn’t remain constant because we can add or remove items from the list and we cannot compute it based on any other state.
+
+From our examples earlier, we spoke about states having a default value when defined. That means we must figure out a way to define the initial state of tasks, which at this point will return the initial list of tasks that we are currently displaying. Ideally, this initial list of tasks should come from an api but we will keep it simple for now and do this in a later chapter.
+
+If you remember from our hierarchical view, the App component is at the highest level so it can be considered as a good entry point to initialize our state.
+
+So what we are going to do is initialize our state with it’s default values in the constructor of the App component class.
+This is what our App.js would look like with a default state in place.
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      tasks: [
+          {
+              'time': '12',
+              'period': 'AM',
+              'activity_title': 'Finish Tutorial Series',
+              'activity_description': '#ReactForNewbies'
+          }, {
+              'time': '9',
+              'period': 'AM',
+              'activity_title': 'Meeting with Team Leads',
+              'activity_description': 'New Project Kickoff'
+          }, {
+              'time': '11',
+              'period': 'AM',
+              'activity_title': 'Call Mom',
+              'activity_description': 'Return her call before she kills me'
+          }, {
+              'time': '3',
+              'period': 'PM',
+              'activity_title': 'Fix Wifey\'s website',
+              'activity_description': 'FB Ads Integration not working'
+          }, {
+              'time': '6',
+              'period': 'PM',
+              'activity_title': 'Do DB Backups',
+              'activity_description': 'Related to upcoming server migration'
+          }
+      ]
+    }
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+          <Avatar />
+          <br />
+          <Date />
+          <br />
+          <TaskList />
+          <br />
+          <AddButton />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+Let’s break this down first shall we?
+
+**constructor():** This works the same way constructors work in any object oriented programming. Remember that every react component is a class primarily so this is how we override the constructor method to have it do some stuff whenever the class is instantiated.
+**super():** If you come from a Java background, this would be familiar to you, it works the same way. The super() method is required to be called inside the constructor method before you can do anything else. It is used to invoke the constructor of the component it is inheriting from. Interestingly, I tried to create a constructor without it and got this error:
+
+**this.state = {…}:** This is where we define our initial state now. Interesting thing to note is that the state is an object. This is really neat because assuming we had more than just a list of tasks to initialize, we could simply add another property to the state object. Also back to why the **super()** method is important, it’s because before it’s called, this is uninitialized, so we can’t access state or anything else.
+
+Now that we’ve moved tasks into **this.state** we can remove our array of tasks from the **TaskList** component.
+
+Hold Up! This doesn’t look right, and as expected, we get an error message.
+
+Okay, looks like we forgot to do something … Let’s walk back a bit. We’ve moved our tasks to the **this.state** in **App.js**. How will **TaskList** know about these tasks now? We can simply pass **this.state.tasks** as props to **TaskList**.
+So first things first, we’ll solve the ‘tasks’ is not defined issue by using **this.props.tasks**.
+```javascript
+import React, {Component} from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+    render() {
+        return (
+            <div>
+                {this.props.tasks.map(function(task, index) {
+                    return <Task
+                                key={index}
+                                time={task.time}
+                                period={task.period}
+                                activity_title={task.activity_title}
+                                activity_description={task.activity_description}/>
+                })}
+            </div>
+        );
+    }
+}
+
+export default TaskList;
+```
+
+And then we can pass this.state.tasks as props to TaskList from App.js
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      tasks: [
+          {
+              'time': '12',
+              'period': 'AM',
+              'activity_title': 'Finish Tutorial Series',
+              'activity_description': '#ReactForNewbies'
+          }, {
+              'time': '9',
+              'period': 'AM',
+              'activity_title': 'Meeting with Team Leads',
+              'activity_description': 'New Project Kickoff'
+          }, {
+              'time': '11',
+              'period': 'AM',
+              'activity_title': 'Call Mom',
+              'activity_description': 'Return her call before she kills me'
+          }, {
+              'time': '3',
+              'period': 'PM',
+              'activity_title': 'Fix Wifey\'s website',
+              'activity_description': 'FB Ads Integration not working'
+          }, {
+              'time': '6',
+              'period': 'PM',
+              'activity_title': 'Do DB Backups',
+              'activity_description': 'Related to upcoming server migration'
+          }
+      ]
+    }
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+          <Avatar />
+          <br />
+          <Date />
+          <br />
+          <TaskList tasks={this.state.tasks} />
+          <br />
+          <AddButton />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+Our app would still look the same but this time we are making use of state & props to put everything in their right place.
+
+Now let’s do something more interesting. Let’s try adding a new task. Now that we understand how states work, we know that to add a new task, what we need to do is change the state of our application with an updated list of tasks that includes the new one we want to add.
+
+To do that, we are going to create a function addTask in App.js and then have our AddButton component take this function as a prop! Yep, props are not only for passing data. It’s also possible to pass a function as well!
+```javascript
+
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      tasks: [
+          {
+              'time': '12',
+              'period': 'AM',
+              'activity_title': 'Finish Tutorial Series',
+              'activity_description': '#ReactForNewbies'
+          }, {
+              'time': '9',
+              'period': 'AM',
+              'activity_title': 'Meeting with Team Leads',
+              'activity_description': 'New Project Kickoff'
+          }, {
+              'time': '11',
+              'period': 'AM',
+              'activity_title': 'Call Mom',
+              'activity_description': 'Return her call before she kills me'
+          }, {
+              'time': '3',
+              'period': 'PM',
+              'activity_title': 'Fix Wifey\'s website',
+              'activity_description': 'FB Ads Integration not working'
+          }, {
+              'time': '6',
+              'period': 'PM',
+              'activity_title': 'Do DB Backups',
+              'activity_description': 'Related to upcoming server migration'
+          }
+      ]
+    };
+  }
+  addTask(){
+    var task = {'time': '5', 'period': 'AM', 'activity_title': 'Jogging', 'activity_description': 'Go for a run!'};
+    var tasks = this.state.tasks.concat(task);
+    this.setState({tasks: tasks});
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+          <Avatar />
+          <br />
+          <Date />
+          <br />
+          <TaskList tasks={this.state.tasks} />
+          <br />
+          <AddButton onClick={this.addTask.bind(this)} />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+One thing to note here: looking at the AddButton props, we are passing **this.addTask.bind(this)** instead of **this.addTask**. This is because simply calling addTask isn’t going to make our component context-aware. This is important for us to be able to manipulate our state like we are doing in the addTask() function. It is also possible to perform this binding in the constructor like this:
+```javascript
+this.addTask = this.addTask.bind(this);
+```
+The other thing to note is in the **addTask()** function, we added the new task to our list of tasks but we also used the setState() function after that. States operate like snapshots. So simply changing the value of something in the state won’t get our components to update. It’s the setState method that causes a reaction if the state changed.
+
+Now let’s edit the AddButton component to handle the actual click event.
+```javascript
+import React, {Component} from 'react';
+import {Row, Col, Button} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class AddButton extends Component {
+    handleClick(){
+      this.props.onClick();
+    }
+    render() {
+        return (
+            <div>
+              <Row>
+                <Col xs={10}></Col>
+                <Col xs={2}>
+                  <Button bsStyle="danger" bsSize="large" onClick={this.handleClick.bind(this)}>
+                    <FontAwesome name='plus' />
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+        );
+    }
+}
+
+export default AddButton;
+```
+
+Just like on App.js we have to bind the **handleClick()** function here to make it context-aware and all we are doing here is calling the **onClick()** function which got passed as a prop and that in turn will call the initial **addTask()** function.
+
+Voila! Save everything, go to your browser and click on the Add Button.
+
+Cool stuff right? Now refresh your page and see what happens. The task list gets reset back to what we put in the initial state. This is beginning to make a lot of sense right? 😁😁😁
+
+Let’s recap on what we did.
+
+- We extracted tasks into this.state
+- We created an addTask function that takes care of updating our state with a new task
+- We handled the click event within the AddButton component and made the changes propagate back to the main state of the application.
