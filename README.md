@@ -1128,3 +1128,230 @@ Let's take care rapidly of the complete button and change the style for the text
 <h4 style={{textDecoration: this.props.completed ? 'line-through' : 'none'}}>{this.props.activity_title}</h4>
                   <p style={{textDecoration: this.props.completed ? 'line-through' : 'none'}}>{this.props.activity_description}</p>
 ```
+
+The next section will handle user input to create new tasks without the 'Jogging' default.
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      newTitle: '',
+      newDescription: '',
+      tasks: [
+        {
+          'time': '12',
+          'period': 'AM',
+          'activity_title': 'Finish Tutorial Series',
+          'activity_description': '#ReactForNewbies',
+          'completed': false
+        }, {
+          'time': '9',
+          'period': 'AM',
+          'activity_title': 'Meeting with Team Leads',
+          'activity_description': 'New Project Kickoff',
+          'completed': true
+        }, {
+          'time': '11',
+          'period': 'AM',
+          'activity_title': 'Call Mom',
+          'activity_description': 'Return her call before she kills me',
+          'completed': false
+        }, {
+          'time': '3',
+          'period': 'PM',
+          'activity_title': 'Fix Wifey\'s website',
+          'activity_description': 'FB Ads Integration not working',
+          'completed': true
+        }, {
+          'time': '6',
+          'period': 'PM',
+          'activity_title': 'Do DB Backups',
+          'activity_description': 'Related to upcoming server migration',
+          'completed': false
+        }
+      ]
+    };
+  }
+  addTask(){
+    var task = {'time': '5', 'period': 'AM', 'activity_title': 'Jogging', 'activity_description': 'Go for a run!'};
+    var tasks = this.state.tasks.concat(task);
+    this.setState({tasks: tasks});
+  }
+  removeTask(index) {
+    var tasks = [
+      ...this.state.tasks.slice(0, index),
+      ...this.state.tasks.slice(index + 1),
+    ]
+    this.setState({tasks: tasks});
+  }
+  toggleCompleteTask(index) {
+    var tasks = this.state.tasks.map((task, idx) => {
+      if (idx === index) {
+        return { ...task, completed: !task.completed }
+      }
+      return task
+    })
+    this.setState({tasks: tasks});
+  }
+  updateTitleValue(event) {
+    this.setState({
+      newTitle: event.target.value
+    })
+  }
+  updateDescriptionValue(event) {
+    this.setState({
+      newDescription: event.target.value
+    })
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+        <Avatar />
+        <br />
+        <Date />
+        <br />
+        <TaskList tasks={this.state.tasks} removeTask={this.removeTask.bind(this)} toggleCompleteTask={this.toggleCompleteTask.bind(this)} />
+        <br />
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+          <input style={{margin: '10px'}} value={this.state.newTitle} placeholder="New task title" onChange={this.updateTitleValue.bind(this)} />
+          <input style={{margin: '10px'}} value={this.state.newDescription} placeholder="New task description" onChange={this.updateDescriptionValue.bind(this)} />
+        </div>
+        <br />
+        <AddButton onClick={this.addTask.bind(this)} />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
+
+The new **App.js** code has some new parts to handle the lifecycle of state for the input elements that will provide the new task with its title and description.
+
+- State now has as properties newTitle and newDescription which tell the input element what to render on the screen
+- App has new methods to handle the change event emitted by the same inputs
+
+We can now procede to create a custom new Task changing the code from **App.js**
+```javascript
+import React, { Component } from 'react';
+import TaskList from './TaskList.js';
+import Date from './Date.js';
+import Avatar from './Avatar.js';
+import AddButton from './AddButton.js';
+import Moment from 'moment'
+
+import './App.css';
+
+class App extends Component {
+  constructor(){
+    super();
+    this.state = {
+      newTitle: '',
+      newDescription: '',
+      tasks: [
+        {
+          'time': '12',
+          'period': 'AM',
+          'activity_title': 'Finish Tutorial Series',
+          'activity_description': '#ReactForNewbies',
+          'completed': false
+        }, {
+          'time': '9',
+          'period': 'AM',
+          'activity_title': 'Meeting with Team Leads',
+          'activity_description': 'New Project Kickoff',
+          'completed': true
+        }, {
+          'time': '11',
+          'period': 'AM',
+          'activity_title': 'Call Mom',
+          'activity_description': 'Return her call before she kills me',
+          'completed': false
+        }, {
+          'time': '3',
+          'period': 'PM',
+          'activity_title': 'Fix Wifey\'s website',
+          'activity_description': 'FB Ads Integration not working',
+          'completed': true
+        }, {
+          'time': '6',
+          'period': 'PM',
+          'activity_title': 'Do DB Backups',
+          'activity_description': 'Related to upcoming server migration',
+          'completed': false
+        }
+      ]
+    };
+  }
+  addTask() {
+    if (this.state.newTitle && this.state.newDescription) {
+      var task = {
+        'time': Moment().format('H'),
+        'period': Moment().format('A'),
+        'activity_title': this.state.newTitle,
+        'activity_description': this.state.newDescription
+      };
+      var tasks = this.state.tasks.concat(task);
+      this.setState({
+        newTitle: '',
+        newDescription: '',
+        tasks: tasks
+      });
+    }
+  }
+  removeTask(index) {
+    var tasks = [
+      ...this.state.tasks.slice(0, index),
+      ...this.state.tasks.slice(index + 1),
+    ]
+    this.setState({tasks: tasks});
+  }
+  toggleCompleteTask(index) {
+    var tasks = this.state.tasks.map((task, idx) => {
+      if (idx === index) {
+        return { ...task, completed: !task.completed }
+      }
+      return task
+    })
+    this.setState({tasks: tasks});
+  }
+  updateTitleValue(event) {
+    this.setState({
+      newTitle: event.target.value
+    })
+  }
+  updateDescriptionValue(event) {
+    this.setState({
+      newDescription: event.target.value
+    })
+  }
+  render() {
+    return (
+      <div style={{padding: '30px 30px'}}>
+        <Avatar />
+        <br />
+        <Date />
+        <br />
+        <TaskList tasks={this.state.tasks} removeTask={this.removeTask.bind(this)} toggleCompleteTask={this.toggleCompleteTask.bind(this)} />
+        <br />
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+          <input style={{margin: '10px'}} value={this.state.newTitle} placeholder="New task title" onChange={this.updateTitleValue.bind(this)} />
+          <input style={{margin: '10px'}} value={this.state.newDescription} placeholder="New task description" onChange={this.updateDescriptionValue.bind(this)} />
+        </div>
+        <br />
+        <AddButton onClick={this.addTask.bind(this)} />
+      </div>
+    );
+  }
+}
+
+export default App;
+```
