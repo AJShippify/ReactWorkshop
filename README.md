@@ -285,8 +285,7 @@ export default App;
 
 We will repeat the same process to add an avatar component and an add button component.
 ### Avatar.js
-```
-
+```javascript
 import React, {Component} from 'react';
 import {Row, Col, Image} from 'react-bootstrap';
 
@@ -363,3 +362,224 @@ class App extends Component {
 
 export default App;
 ```
+
+But our list of tasks is static. Our date is also static. And we can’t actually add new tasks to this list yet. Yuck!
+
+Let’s start with an easy one. Our Date component is supposed to simply display the current date.
+Currently, our date component looks like this:
+```javascript
+import React, {Component} from 'react';
+
+class Date extends Component {
+    render() {
+        return (
+            <div>
+                <h1>Thursday</h1>
+                <p>May 19, 2016</p>
+            </div>
+        );
+    }
+}
+
+export default Date;
+```
+
+So what we need todo is make that the date be dynamic and display the current date. Luckily, there’s a great library for working with dates in javascript: MomentJS. So let’s use that to display our date. First of all, let’s install it with the following command:
+```bash
+npm install moment --save
+```
+After installing the moment library, we can import it and use it like this:
+```javascript
+import React, {Component} from 'react';
+import Moment from 'moment';
+
+class Date extends Component {
+    render() {
+        return (
+            <div>
+                <h1>{Moment().format('dddd')}</h1>
+                <p>{Moment().format('LL')}</p>
+            </div>
+        );
+    }
+}
+
+export default Date;
+```
+Hehe, looks like magic but it’s not really difficult. First off, there’s the use of the single curly braces around our html tags. This is necessary so we can tell our transpiler that the code in the braces is javascript code that needs to be executed and evaluated.
+
+By following the momentjs documentation, using the format function with a format string gives us exactly what we need. By default Moment() returns the date & time as of when it’s executed. So applying the ‘dddd’ format gives us the full day (e.g. Monday, Tuesday …) instead of a number (e.g. Monday = 1). And the ‘LL’ format gives us the date as “Month Name, Day of Month, Year”.
+
+Perfect! Now let’s do something more interesting. Our TaskList component right now displays a static list of 5 components. They all display the same thing. What we will do first is tweak up our task component so that we can pass some data to it and make it dynamic. Currently, our task component looks like this:
+```javascript
+import React, {Component} from 'react';
+import {Row, Col} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class Task extends Component {
+    render() {
+        return (
+            <div>
+                <Row>
+                    <Col xs={1}>
+                        <div>
+                            <p style={{textAlign: 'center', fontWeight: 'bold', paddingTop: '10px'}}>8
+                                <br/>
+                                <span>AM</span>
+                            </p>
+                        </div>
+                    </Col>
+                    <Col xs={10}>
+                        <h4 id="activity-title">Storefoundry Branding</h4>
+                        <p>Ideation/Sketch/Wireframing</p>
+                    </Col>
+                    <Col xs={1}>
+                        <Row style={{paddingTop: '10px'}}>
+                          <Col xs={6}>
+                            <FontAwesome name='times' />
+                          </Col>
+                          <Col xs={6}>
+                            <FontAwesome name='check' />
+                          </Col>
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
+        );
+    }
+}
+
+export default Task;
+```
+
+The parts of the components I would like to make dynamic are the time section, the activity title and the activity description. But wait, if I’m making them dynamic, how am I going to pass data to it? Where is that data going to come from? 🤔
+Follow along, and say hello to **Props** #LetsDoThis 😄
+What are Props? Props are to react components what parameters are to functions. If you think about components like functions, then the way you define which parameters you pass to your functions is exactly how you would define your props as arbitrary inputs to be used in your react components. Applying that to our task component would give us something like this:
+```javascript
+import React, {Component} from 'react';
+import {Row, Col} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
+
+class Task extends Component {
+    render() {
+        return (
+            <div>
+                <Row>
+                    <Col xs={1}>
+                        <div>
+                            <p style={{textAlign: 'center', fontWeight: 'bold', paddingTop: '10px'}}>{this.props.time}
+                                <br/>
+                                <span>{this.props.period}</span>
+                            </p>
+                        </div>
+                    </Col>
+                    <Col xs={10}>
+                        <h4>{this.props.activity_title}</h4>
+                        <p>{this.props.activity_description}</p>
+                    </Col>
+                    <Col xs={1}>
+                        <Row style={{paddingTop: '10px'}}>
+                          <Col xs={6}>
+                            <FontAwesome name='times' />
+                          </Col>
+                          <Col xs={6}>
+                            <FontAwesome name='check' />
+                          </Col>
+                        </Row>
+                    </Col>
+                </Row>
+            </div>
+        );
+    }
+}
+
+export default Task;
+```
+
+We didn’t change much, all we did was replace a bunch of static texts with this.props expressions. At this stage, if we take a look at our app, it’s going to look weird …
+
+Where did all the text go???? 😱😱😱
+Don’t panic just yet 😉 … Think about it. We now have a component with props defined. If the tasks are being displayed this way, it’s because the tasks components don’t know what the values of props.time, props.period, props.activity_title and props.activity_description are. So we need to edit our task list component to make sure that we are giving our tasks their props values for it to work as expected. Let’s do that real quick.
+```javascript
+import React, { Component } from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+  render() {
+    return (
+      <div>
+          <Task time="12" period="AM" activity_title="Finish Tutorial Series" activity_description="#ReactForNewbies" />
+          <Task time="9" period="AM" activity_title="Meeting with Team Leads" activity_description="New Project Kickoff" />
+          <Task time="11" period="AM" activity_title="Call Mom" activity_description="Return her call before she kills me" />
+          <Task time="3" period="PM" activity_title="Fix Wifey's website" activity_description="FB Ads Integration not working" />
+          <Task time="6" period="PM" activity_title="Do DB Backups" activity_description="Related to upcoming server migration" />
+      </div>
+    );
+  }
+}
+
+export default TaskList;
+```
+
+Look at that! Now we have dynamic tasks and our task list is displaying tasks based on which props we passed to each of them.
+This is good … but it could be better. What if I could store all my tasks in an array so I can just loop through them to display my task list? Let’s tweak our task list component a bit.
+```javascript
+import React, {Component} from 'react';
+import Task from './Task.js';
+
+class TaskList extends Component {
+    render() {
+        var tasks = [
+            {
+                'time': '12',
+                'period': 'AM',
+                'activity_title': 'Finish Tutorial Series',
+                'activity_description': '#ReactForNewbies'
+            }, {
+                'time': '9',
+                'period': 'AM',
+                'activity_title': 'Meeting with Team Leads',
+                'activity_description': 'New Project Kickoff'
+            }, {
+                'time': '11',
+                'period': 'AM',
+                'activity_title': 'Call Mom',
+                'activity_description': 'Return her call before she kills me'
+            }, {
+                'time': '3',
+                'period': 'PM',
+                'activity_title': 'Fix Wifey\'s website',
+                'activity_description': 'FB Ads Integration not working'
+            }, {
+                'time': '6',
+                'period': 'PM',
+                'activity_title': 'Do DB Backups',
+                'activity_description': 'Related to upcoming server migration'
+            }
+        ];
+
+        return (
+            <div>
+                {tasks.map(function(task, index) {
+                    return <Task
+                                key={index}
+                                time={task.time}
+                                period={task.period}
+                                activity_title={task.activity_title}
+                                activity_description={task.activity_description}/>
+                })}
+            </div>
+        );
+    }
+}
+
+export default TaskList;
+```
+
+Our app still looks the same but under the hood, we have a more flexible way to manipulate our data. Try changing anything, adding a new task, editing existing tasks or removing a task and see what happens on the app. 😃
+That wasn’t too hard right? Let’s recap on what we did.
+We introduced a new 3rd party library called MomentJS to work with dates. Even though we didn’t do much with it in this chapter, we will work with it a little more in the upcoming chapter.
+We learned about props and applied them to make our task component dynamic.
+We tweaked our tasklist component so we can pass data to it directly from an array of tasks.
+We played around with our array of tasks to see our app automatically update itself with the state of our tasks array.
+Let’s pause for a second and think about this array of tasks again. Based on what we’ve seen, that means when adding a task, all we have to do is insert our task into the array of tasks and deleting a task just means removing that task from the array of tasks right? And we don’t have to worry about what happens on the UI side of things because it will automatically detect our changes and REACT to them … 😍😍😍
